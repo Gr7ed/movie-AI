@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+    <head>
+        <title>PopChoice</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Carter+One&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <header class="header">
+            <!-- Emoji placeholder used as a logo -->
+            <span class="logo">🍿</span>
+            <h1 class="app-name">PopChoice</h1>
+        </header>
+        <main class="main-content">
+            <section class="description">
+                <p>AI-powered movie recommendations based on your preferences.</p>
+            </section>
+            <form class="movie-form" id="movie-form">
+                <div class="input-group">
+                    <label for="favorite-movie">Favorite Movie</label>
+                    <input type="text" id="favorite-movie" placeholder="e.g. Inception">
+                </div>
+                <div class="input-group">
+                    <label for="favorite-genre">Favorite Genre</label>
+                    <input type="text" id="favorite-genre" placeholder="e.g. Sci-Fi">
+                </div>
+                <div class="input-group">
+                    <label for="mood">Current Mood</label>
+                    <input type="text" id="mood" placeholder="e.g. Excited">
+                </div>
+                <button type="submit" class="submit-btn">Get Recommendation</button>
+            </form>
+        </main>
+        <script type="module" src="index.js"></script>
+    </body>
+</html> 
