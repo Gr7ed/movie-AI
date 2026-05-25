@@ -1,6 +1,8 @@
 <!doctype html>
 <html>
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>PopChoice</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -9,8 +11,7 @@
     </head>
     <body>
         <header class="header">
-            <!-- Emoji placeholder used as a logo -->
-            <span class="logo">🍿</span>
+            <span class="logo"><img src="./assets/popcorn-logo.png" alt="PopChoice Logo"></span>
             <h1 class="app-name">PopChoice</h1>
         </header>
         <main class="main-content">
@@ -19,18 +20,18 @@
             </section>
             <form class="movie-form" id="movie-form">
                 <div class="input-group">
-                    <label for="favorite-movie">Favorite Movie</label>
-                    <input type="text" id="favorite-movie" placeholder="e.g. Inception">
+                    <label for="favorite-movie">What's your favorite movie and why?</label>
+                    <textarea id="favorite-movie" rows="1" placeholder="e.g. The Shawshank Redemption, because it taught me to never give up hope." oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                 </div>
                 <div class="input-group">
-                    <label for="favorite-genre">Favorite Genre</label>
-                    <input type="text" id="favorite-genre" placeholder="e.g. Sci-Fi">
+                    <label for="mood">Are you in the mood for something new or a classic?</label>
+                    <textarea id="mood" rows="1" placeholder="e.g. were released after 1990" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                 </div>
                 <div class="input-group">
-                    <label for="mood">Current Mood</label>
-                    <input type="text" id="mood" placeholder="e.g. Excited">
+                    <label for="favorite-genre">Do you wanna have fun or do you want something serious?</label>
+                    <textarea id="favorite-genre" rows="1" placeholder="e.g. something stupid and fun" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                 </div>
-                <button type="submit" class="submit-btn">Get Recommendation</button>
+                <button type="submit" class="submit-btn">Let's Go</button>
             </form>
         </main>
         <script type="module" src="index.js"></script>

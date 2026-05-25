@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.38.2",
-    "openai": "4.12.3",
+    "@langchain/textsplitters": "^1.0.1",
+    "@supabase/supabase-js": "^2.38.2",
+    "openai": "^4.12.3",
     "vite": "latest"
-  },
-  "devDependencies": {}
+  }
 }
