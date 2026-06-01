@@ -157,6 +157,23 @@ input:focus, textarea:focus {
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.movie-poster {
+    width: 100%;
+    max-width: 250px;
+    border-radius: 8px;
+    object-fit: cover;
+    align-self: center;
+}
+
+.movie-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .movie-title {
@@ -181,4 +198,16 @@ input:focus, textarea:focus {
     font-size: 1.2rem;
     color: var(--btn-color);
     font-style: italic;
+}
+
+/* --- Desktop Responsiveness for Results --- */
+@media (min-width: 768px) {
+    .movie-card {
+        flex-direction: row;
+    }
+
+    .movie-poster {
+        width: 150px;
+        align-self: flex-start;
+    }
 }

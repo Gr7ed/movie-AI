@@ -1,11 +1,11 @@
-import { openai, supabase, SYSTEM_PROMPT } from './config.js';
+import { openai, supabase, SYSTEM_PROMPT, TMDB_API_KEY } from './config.js';
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { movieRecommendationSchema } from './schema.js';
+import { movieRecommendationSchema, webSearchToolSchema } from './schema.js';
 
 const CHAT_MODEL = 'gpt-4o-mini';
 const EMBEDDING_MODEL = 'text-embedding-ada-002';
 const MATCH_THRESHOLD = 0.50;
-const MATCH_COUNT = 1;
+const MATCH_COUNT = 4;
 
 const form = document.getElementById('movie-form');
 const resultsContainer = document.getElementById('results-container');
@@ -27,7 +27,7 @@ form.addEventListener('submit', async (e) => {
     renderMessage('Analyzing your preferences...');
 
     console.log({ favoriteMovie, mood, favoriteGenre });
-    const userInput = `My favorite movie is ${favoriteMovie}. My current mood is ${mood}. My favorite genre is ${favoriteGenre}.`;
+    const userInput = `My favorite movie is ${favoriteMovie}. My current mood is ${mood}. My preferred genre is ${favoriteGenre}.`;
 
     // Call the function to get movie recommendations based on user input
     await getMovieRecommendations(userInput);
@@ -46,12 +46,9 @@ async function getMovieRecommendations(input) {
     const match = await findNearestMatch(embedding);
     
     // 3. Pass the combined context to the LLM to get a natural response
-    if (match) {
-      const responseContent = await getChatCompletion(match, input);
-      renderRecommendations(responseContent);
-    } else {
-      renderMessage("Sorry, no relevant movie context was found.");
-    }
+    const context = match || "No local movie context found. Please use the web_search tool or your internal knowledge to provide recommendations.";
+    const responseContent = await getChatCompletion(context, input);
+    await renderRecommendations(responseContent);
   } catch (error) { 
     console.error('Error in main function:', error);
     renderMessage("An error occurred while finding recommendations.");
@@ -111,26 +108,7 @@ async function getChatCompletion(text, query) {
       type: "json_schema",
       json_schema: movieRecommendationSchema
     },
-    tools: [
-      {
-        type: "function",
-        function: {
-          name: "web_search",
-          description: "Search the web for up-to-date movie information, ratings, or recommendations.",
-          parameters: {
-            type: "object",
-            properties: {
-              query: {
-                type: "string",
-                description: "The search query to find movie information."
-              }
-            },
-            required: ["query"],
-            additionalProperties: false
-          }
-        }
-      }
-    ]
+    tools: [webSearchToolSchema]
   };
 
   try {
@@ -178,7 +156,7 @@ async function getChatCompletion(text, query) {
   
 }
 
-function renderRecommendations(jsonString) {
+async function renderRecommendations(jsonString) {
   resultsContainer.innerHTML = ''; // Clear loading text
   
   if (!jsonString) {
@@ -195,10 +173,22 @@ function renderRecommendations(jsonString) {
       return;
     }
 
-    recommendations.forEach(movie => {
+    for (const movie of recommendations) {
       const card = document.createElement('div');
       card.className = 'movie-card';
       
+      const posterUrl = await fetchMoviePoster(movie.title);
+      if (posterUrl) {
+        const poster = document.createElement('img');
+        poster.className = 'movie-poster';
+        poster.src = posterUrl;
+        poster.alt = `${movie.title} Poster`;
+        card.appendChild(poster);
+      }
+
+      const infoContainer = document.createElement('div');
+      infoContainer.className = 'movie-info';
+
       const title = document.createElement('h2');
       title.className = 'movie-title';
       title.textContent = movie.title;
@@ -211,15 +201,32 @@ function renderRecommendations(jsonString) {
       content.className = 'movie-content';
       content.textContent = movie.content;
       
-      card.appendChild(title);
-      card.appendChild(year);
-      card.appendChild(content);
+      infoContainer.appendChild(title);
+      infoContainer.appendChild(year);
+      infoContainer.appendChild(content);
+      
+      card.appendChild(infoContainer);
       
       resultsContainer.appendChild(card);
-    });
+    }
   } catch (error) {
     console.error("Error parsing JSON response:", error);
     renderMessage("An error occurred while displaying recommendations.");
+  }
+}
+
+async function fetchMoviePoster(title) {
+  if (!TMDB_API_KEY) return null;
+  try {
+    const response = await fetch(`https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(title)}&api_key=${TMDB_API_KEY}`);
+    const data = await response.json();
+    if (data.results && data.results.length > 0 && data.results[0].poster_path) {
+      return `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching poster from TMDB:", error);
+    return null;
   }
 }
 
@@ -267,6 +274,17 @@ async function checkDuplicateContent(content) {
 Store all embeddings and corresponding text in Supabase. */
 async function createAndStoreEmbeddings() {
   try{
+    // Authenticate a user to satisfy the RLS policy before inserting
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: import.meta.env.VITE_SUPABASE_ADMIN_EMAIL,
+      password: import.meta.env.VITE_SUPABASE_ADMIN_PASSWORD
+    });
+    
+    if (authError) {
+      console.error('Authentication error:', authError.message);
+      return; // Stop execution if auth fails
+    }
+
     const chunkData = await splitDocument(text);
     
     // Best Practice: Use a sequential loop instead of Promise.all to avoid hitting API rate limits

@@ -32,3 +32,22 @@ export const movieRecommendationSchema = {
     additionalProperties: false
   }
 };
+
+export const webSearchToolSchema = {
+  type: "function",
+  function: {
+    name: "web_search",
+    description: "Search the web for up-to-date movie information, ratings, or recommendations.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "The search query to find movie information."
+        }
+      },
+      required: ["query"],
+      additionalProperties: false
+    }
+  }
+};
