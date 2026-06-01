@@ -1,6 +1,7 @@
 import { openai, supabase, SYSTEM_PROMPT, TMDB_API_KEY } from './config.js';
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { movieRecommendationSchema, webSearchToolSchema } from './schema.js';
+import DOMPurify from 'dompurify';
 
 const CHAT_MODEL = 'gpt-4o-mini';
 const EMBEDDING_MODEL = 'text-embedding-ada-002';
@@ -27,7 +28,7 @@ form.addEventListener('submit', async (e) => {
     renderMessage('Analyzing your preferences...');
 
     console.log({ favoriteMovie, mood, favoriteGenre });
-    const userInput = `My favorite movie is ${favoriteMovie}. My current mood is ${mood}. My preferred genre is ${favoriteGenre}.`;
+    const userInput = `My favorite movie is ${favoriteMovie}. My current mood is ${mood}. My preferred genres are ${favoriteGenre}.`;
 
     // Call the function to get movie recommendations based on user input
     await getMovieRecommendations(userInput);
@@ -165,7 +166,12 @@ async function renderRecommendations(jsonString) {
   }
 
   try {
-    const data = JSON.parse(jsonString);
+    // Ensure strict JSON format by stripping markdown code blocks if the LLM included them
+    let cleanedString = jsonString.trim();
+    if (cleanedString.startsWith("```")) {
+      cleanedString = cleanedString.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    }
+    const data = JSON.parse(cleanedString);
     const recommendations = data.recommendations;
     
     if (!recommendations || recommendations.length === 0) {
@@ -181,8 +187,8 @@ async function renderRecommendations(jsonString) {
       if (posterUrl) {
         const poster = document.createElement('img');
         poster.className = 'movie-poster';
-        poster.src = posterUrl;
-        poster.alt = `${movie.title} Poster`;
+        poster.src = DOMPurify.sanitize(posterUrl);
+        poster.alt = DOMPurify.sanitize(`${movie.title} Poster`);
         card.appendChild(poster);
       }
 
@@ -191,15 +197,15 @@ async function renderRecommendations(jsonString) {
 
       const title = document.createElement('h2');
       title.className = 'movie-title';
-      title.textContent = movie.title;
+      title.innerHTML = DOMPurify.sanitize(movie.title);
       
       const year = document.createElement('p');
       year.className = 'movie-year';
-      year.textContent = `Released: ${movie.releaseYear}`;
+      year.innerHTML = DOMPurify.sanitize(`Released: ${movie.releaseYear}`);
       
       const content = document.createElement('p');
       content.className = 'movie-content';
-      content.textContent = movie.content;
+      content.innerHTML = DOMPurify.sanitize(movie.content);
       
       infoContainer.appendChild(title);
       infoContainer.appendChild(year);
