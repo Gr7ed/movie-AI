@@ -5,8 +5,8 @@ import DOMPurify from 'dompurify';
 
 const CHAT_MODEL = 'gpt-4o-mini';
 const EMBEDDING_MODEL = 'text-embedding-ada-002';
-const MATCH_THRESHOLD = 0.50;
-const MATCH_COUNT = 4;
+const MATCH_THRESHOLD = 0.60;
+const MATCH_COUNT = 2;
 
 const form = document.getElementById('movie-form');
 const resultsContainer = document.getElementById('results-container');
@@ -83,9 +83,8 @@ async function findNearestMatch(embedding) {
     
     // Gracefully handle the scenario where no results meet the match_threshold
     if (!data || data.length === 0) return null;
-    const topMatch = data.map(match => match.content).join('\n');
+    const topMatch = data.map((match, index) => `[Rank ${index + 1}]: ${match.content}`).join('\n');
     console.log('Top matches from Supabase:', topMatch);
-    // Best Practice: Combine top matches to provide comprehensive context
     return topMatch;
   } catch (error) {
     console.error('Error finding nearest match:', error);
@@ -130,8 +129,24 @@ async function getChatCompletion(text, query) {
           const args = JSON.parse(toolCall.function.arguments);
           console.log(`Executing web search for: ${args.query}`);
           
-          // Placeholder search result (You can replace this with a real Search API later)
-          const searchResult = `Live search is currently unavailable. Please generate recommendations for "${args.query}" based on the provided context or your internal knowledge.`;
+          let searchResult = `No movies found for "${args.query}".`;
+          try {
+            if (TMDB_API_KEY) {
+              const response = await fetch(`https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(args.query)}&api_key=${TMDB_API_KEY}`);
+              const data = await response.json();
+              if (data.results && data.results.length > 0) {
+                const topResults = data.results.slice(0, 5).map(m => 
+                  `Title: ${m.title} (${m.release_date ? m.release_date.split('-')[0] : 'N/A'})\nRating: ${m.vote_average}/10\nOverview: ${m.overview}`
+                ).join('\n\n');
+                searchResult = `Search results for "${args.query}":\n\n${topResults}`;
+              }
+            } else {
+              searchResult = `Live search is currently unavailable (Missing API Key). Please generate recommendations for "${args.query}" based on the provided context or your internal knowledge.`;
+            }
+          } catch (error) {
+            console.error("Search API error:", error);
+            searchResult = `Error searching. Please generate recommendations for "${args.query}" based on the provided context or your internal knowledge.`;
+          }
           
           // 3. Add the result of the tool to our message history
           chatMessages.push({
