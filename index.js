@@ -5,8 +5,8 @@ import DOMPurify from 'dompurify';
 
 const CHAT_MODEL = 'gpt-4o-mini';
 const EMBEDDING_MODEL = 'text-embedding-ada-002';
-const MATCH_THRESHOLD = 0.60;
-const MATCH_COUNT = 2;
+const MATCH_THRESHOLD = 0.50;
+const MATCH_COUNT = 3;
 
 const form = document.getElementById('movie-form');
 const resultsContainer = document.getElementById('results-container');
